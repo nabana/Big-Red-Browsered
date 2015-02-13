@@ -15,6 +15,7 @@ for (var i=0; i<9; i++) {
     GET_STATUS_AB[i] = GET_STATUS[i];
 }
 
+var oId = 0;
 
 console.log(GET_STATUS_AB);
 
@@ -35,6 +36,24 @@ function initializeHidWithPoller( pollHid ) {
         chrome.hid.connect(myHidDevice, function (connection) {
 
             console.log('Connected to Big Red Button!', connection);
+
+            chrome.hid.receive(connection.connectionId, function (data) {
+
+                console.log(data);
+                console.log(chrome.runtime);
+
+                if (data != null) {
+                    // Convert Byte into Ascii to follow the format of our device
+                    myText.value = arrayBufferToString(data);
+                    console.log('Data: ' + myText.value);
+
+                }
+
+//        setTimeout(myDevicePoll, 100, connectionId);
+
+            });
+
+
             pollHid( connection.connectionId );
 
         });
@@ -49,33 +68,16 @@ var myDevicePoll = function ( connectionId ) {
 
     var myText;
 
+    console.log(connectionId);
+
     myText = {};
 
     if (chrome.runtime.lastError) {
         console.log(chrome.runtime.lastError);
     }
 
-    chrome.hid.send(connectionId, 0, GET_STATUS_AB, function (reportId, data) {
-
-
-        chrome.hid.receive(connectionId, function () {
-
-            console.log(reportId, data);
-            console.log(chrome.runtime);
-
-            if (data != null) {
-                // Convert Byte into Ascii to follow the format of our device
-                myText.value = arrayBufferToString(data);
-                console.log('Data: ' + myText.value);
-
-            }
-
-//        setTimeout(myDevicePoll, 100, connectionId);
-
-        });
-
+    chrome.hid.send(connectionId, 0,  new Uint8Array(GET_STATUS_AB).buffer, function () {
         setTimeout(myDevicePoll, 100, connectionId);
-
     });
 
 
